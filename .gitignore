@@ -1,0 +1,4 @@
+# Ignore Linux and Windows binaries
+*.o
+*.exe
+app
