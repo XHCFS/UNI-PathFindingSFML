@@ -1,4 +1,6 @@
-# Ignore Linux and Windows binaries
-*.o
-*.exe
-app
+build
+out
+.cache
+.idea
+.vs
+.vscode
