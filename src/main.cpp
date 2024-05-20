@@ -1,24 +1,24 @@
-#include <SFML/Graphics.hpp>
+#include <iostream>
+#include "FileReader.cpp"
+#include "Graph.cpp"
+#include "GUI.cpp"
 
-int main()
-{
-    sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
-    sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Green);
-
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
-
-        window.clear();
-        window.draw(shape);
-        window.display();
+int main() {
+    // Read a single frame from file
+    std::vector<std::vector<int>> frame;
+    try {
+        frame = readFrameFromFile("frame.txt");
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
     }
+
+    // Process the frame to generate multiple frames
+    std::vector<std::vector<std::vector<int>>> frames = processFrame(frame);
+
+    // Display the frames
+    displayFrames(frames);
 
     return 0;
 }
+
