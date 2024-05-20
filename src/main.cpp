@@ -1,7 +1,8 @@
+// Main.cpp
 #include <iostream>
-#include "FileReader.cpp"
-#include "Graph.cpp"
-#include "GUI.cpp"
+#include "FileReader.h"
+#include "Graph.h"
+#include "GUI.h"
 
 int main() {
     // Read a single frame from file

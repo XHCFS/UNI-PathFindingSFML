@@ -1,11 +1,7 @@
 // GUI.cpp
+#include "GUI.h"
 #include <SFML/Graphics.hpp>
 #include <vector>
-
-// Constants
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
-const int PIXEL_SIZE = 10;
 
 // Function to get color from value
 sf::Color getColorFromValue(int value) {
@@ -21,7 +17,23 @@ sf::Color getColorFromValue(int value) {
 
 // Function to display frames
 void displayFrames(const std::vector<std::vector<std::vector<int>>>& frames) {
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "SFML Grid");
+    if (frames.empty() || frames[0].empty()) {
+        return;
+    }
+
+    // Calculate pixel size and window size based on the frame dimensions
+    const int frameHeight = frames[0].size();
+    const int frameWidth = frames[0][0].size();
+    const int WINDOW_WIDTH = 800;
+    const int WINDOW_HEIGHT = 600;
+    const int PIXEL_SIZE_X = WINDOW_WIDTH / frameWidth;
+    const int PIXEL_SIZE_Y = WINDOW_HEIGHT / frameHeight;
+    const int PIXEL_SIZE = std::min(PIXEL_SIZE_X, PIXEL_SIZE_Y);
+
+    const int ACTUAL_WINDOW_WIDTH = PIXEL_SIZE * frameWidth;
+    const int ACTUAL_WINDOW_HEIGHT = PIXEL_SIZE * frameHeight;
+
+    sf::RenderWindow window(sf::VideoMode(ACTUAL_WINDOW_WIDTH, ACTUAL_WINDOW_HEIGHT), "SFML Grid");
 
     sf::Clock clock;
     int frameIndex = 0;
@@ -54,4 +66,3 @@ void displayFrames(const std::vector<std::vector<std::vector<int>>>& frames) {
         window.display();
     }
 }
-
