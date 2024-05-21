@@ -3,53 +3,42 @@
 using namespace std;
 
 #define ROW 9
-#define COL 10
-#define CELL_SIZE 50
+#define COL 9
+#define CELL_SIZE 40 // Size of each cell in the grid
 
 typedef pair<int, int> Pair;
 typedef pair<double, pair<int, int>> pPair;
 
-struct cell
-{
+struct cell {
     int parent_i, parent_j;
     double f, g, h;
 };
 
-bool isValid(int row, int col)
-{
+bool isValid(int row, int col) {
     return (row >= 0) && (row < ROW) && (col >= 0) && (col < COL);
 }
 
-bool isUnBlocked(int grid[][COL], int row, int col)
-{
-    if (grid[row][col] == 1)
-        return (true);
-    else
-        return (false);
+bool isUnBlocked(int grid[][COL], int row, int col) {
+    return (grid[row][col] == 1);
 }
 
-bool isDestination(int row, int col, Pair dest)
-{
-    if (row == dest.first && col == dest.second)
-        return (true);
-    else
-        return (false);
+bool isDestination(int row, int col, Pair dest) {
+    return (row == dest.first && col == dest.second);
 }
 
-double calculateHValue(int row, int col, Pair dest)
-{
-    return ((double)sqrt((row - dest.first) * (row - dest.first) + (col - dest.second) * (col - dest.second)));
+double calculateHValue(int row, int col, Pair dest) {
+    // Manhattan distance
+    return abs(row - dest.first) + abs(col - dest.second);
 }
 
-void tracePath(cell cellDetails[][COL], Pair src, Pair dest, sf::RenderWindow &window, int grid[][COL])
-{
+void tracePath(cell cellDetails[][COL], Pair dest, sf::RenderWindow &window, sf::RectangleShape &cellShape) {
     printf("\nThe Path is ");
     int row = dest.first;
     int col = dest.second;
+
     stack<Pair> Path;
 
-    while (!(cellDetails[row][col].parent_i == row && cellDetails[row][col].parent_j == col))
-    {
+    while (!(cellDetails[row][col].parent_i == row && cellDetails[row][col].parent_j == col)) {
         Path.push(make_pair(row, col));
         int temp_row = cellDetails[row][col].parent_i;
         int temp_col = cellDetails[row][col].parent_j;
@@ -58,83 +47,36 @@ void tracePath(cell cellDetails[][COL], Pair src, Pair dest, sf::RenderWindow &w
     }
 
     Path.push(make_pair(row, col));
-    while (!Path.empty())
-    {
+    while (!Path.empty()) {
         pair<int, int> p = Path.top();
         Path.pop();
         printf("-> (%d,%d) ", p.first, p.second);
 
-        grid[p.first][p.second] = 3; // Mark the final path
-
-        window.clear();
-        for (int i = 0; i < ROW; ++i)
-        {
-            for (int j = 0; j < COL; ++j)
-            {
-                sf::RectangleShape cellShape(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-                cellShape.setPosition(j * CELL_SIZE, i * CELL_SIZE);
-
-                if (i == src.first && j == src.second)
-                {
-                    cellShape.setFillColor(sf::Color::Red); // Start point color
-                }
-                else if (i == dest.first && j == dest.second)
-                {
-                    cellShape.setFillColor(sf::Color::Blue); // End point color
-                }
-                else if (grid[i][j] == 0)
-                {
-                    cellShape.setFillColor(sf::Color::Black);
-                }
-                else if (grid[i][j] == 1)
-                {
-                    cellShape.setFillColor(sf::Color::White);
-                }
-                else if (grid[i][j] == 2)
-                {
-                    cellShape.setFillColor(sf::Color::Yellow); // Exploration color
-                }
-                else if (grid[i][j] == 3)
-                {
-                    cellShape.setFillColor(sf::Color::Green); // Final path color
-                }
-
-                cellShape.setOutlineColor(sf::Color::Blue);
-                cellShape.setOutlineThickness(1);
-                window.draw(cellShape);
-            }
-        }
+        cellShape.setPosition(p.second * CELL_SIZE, p.first * CELL_SIZE);
+        cellShape.setFillColor(sf::Color::Blue);
+        window.draw(cellShape);
         window.display();
-        sf::sleep(sf::milliseconds(500)); // Slow down the animation
+        sf::sleep(sf::milliseconds(250));
     }
-
-    printf("\n"); // Ensure the output ends with a newline
-
-    return;
 }
 
-void aStarSearch(int grid[][COL], Pair src, Pair dest, sf::RenderWindow &window)
-{
-    if (isValid(src.first, src.second) == false)
-    {
+void aStarSearch(int grid[][COL], Pair src, Pair dest, sf::RenderWindow &window, sf::RectangleShape &cellShape) {
+    if (isValid(src.first, src.second) == false) {
         printf("Source is invalid\n");
         return;
     }
 
-    if (isValid(dest.first, dest.second) == false)
-    {
+    if (isValid(dest.first, dest.second) == false) {
         printf("Destination is invalid\n");
         return;
     }
 
-    if (isUnBlocked(grid, src.first, src.second) == false || isUnBlocked(grid, dest.first, dest.second) == false)
-    {
+    if (isUnBlocked(grid, src.first, src.second) == false || isUnBlocked(grid, dest.first, dest.second) == false) {
         printf("Source or the destination is blocked\n");
         return;
     }
 
-    if (isDestination(src.first, src.second, dest) == true)
-    {
+    if (isDestination(src.first, src.second, dest) == true) {
         printf("We are already at the destination\n");
         return;
     }
@@ -146,10 +88,8 @@ void aStarSearch(int grid[][COL], Pair src, Pair dest, sf::RenderWindow &window)
 
     int i, j;
 
-    for (i = 0; i < ROW; i++)
-    {
-        for (j = 0; j < COL; j++)
-        {
+    for (i = 0; i < ROW; i++) {
+        for (j = 0; j < COL; j++) {
             cellDetails[i][j].f = FLT_MAX;
             cellDetails[i][j].g = FLT_MAX;
             cellDetails[i][j].h = FLT_MAX;
@@ -167,20 +107,10 @@ void aStarSearch(int grid[][COL], Pair src, Pair dest, sf::RenderWindow &window)
 
     set<pPair> openList;
     openList.insert(make_pair(0.0, make_pair(i, j)));
+
     bool foundDest = false;
 
-    while (!openList.empty())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-                return;
-            }
-        }
-
+    while (!openList.empty()) {
         pPair p = *openList.begin();
         openList.erase(openList.begin());
 
@@ -188,365 +118,98 @@ void aStarSearch(int grid[][COL], Pair src, Pair dest, sf::RenderWindow &window)
         j = p.second.second;
         closedList[i][j] = true;
 
-        grid[i][j] = 2; // Mark as explored
-
         window.clear();
-        for (int m = 0; m < ROW; ++m)
-        {
-            for (int n = 0; n < COL; ++n)
-            {
-                sf::RectangleShape cellShape(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-                cellShape.setPosition(n * CELL_SIZE, m * CELL_SIZE);
-
-                if (m == src.first && n == src.second)
-                {
-                    cellShape.setFillColor(sf::Color::Red); // Start point color
-                }
-                else if (m == dest.first && n == dest.second)
-                {
-                    cellShape.setFillColor(sf::Color::Blue); // End point color
-                }
-                else if (grid[m][n] == 0)
-                {
+        for (int row = 0; row < ROW; row++) {
+            for (int col = 0; col < COL; col++) {
+                cellShape.setPosition(col * CELL_SIZE, row * CELL_SIZE);
+                if (grid[row][col] == 0) {
                     cellShape.setFillColor(sf::Color::Black);
-                }
-                else if (grid[m][n] == 1)
-                {
+                } else if (closedList[row][col]) {
+                    cellShape.setFillColor(sf::Color::Red);
+                } else if (row == src.first && col == src.second) {
+                    cellShape.setFillColor(sf::Color::Green);
+                } else if (row == dest.first && col == dest.second) {
+                    cellShape.setFillColor(sf::Color::Magenta);
+                } else {
                     cellShape.setFillColor(sf::Color::White);
                 }
-                else if (grid[m][n] == 2)
-                {
-                    cellShape.setFillColor(sf::Color::Yellow); // Exploration color
-                }
-                else if (grid[m][n] == 3)
-                {
-                    cellShape.setFillColor(sf::Color::Green); // Final path color
-                }
-
-                cellShape.setOutlineColor(sf::Color::Blue);
-                cellShape.setOutlineThickness(1);
                 window.draw(cellShape);
             }
         }
         window.display();
-        sf::sleep(sf::milliseconds(500)); // Slow down the animation
+
+        sf::sleep(sf::milliseconds(250));
 
         double gNew, hNew, fNew;
 
-        //----------- 1st Successor (North) ------------
-        if (isValid(i - 1, j) == true)
-        {
-            if (isDestination(i - 1, j, dest) == true)
-            {
-                cellDetails[i - 1][j].parent_i = i;
-                cellDetails[i - 1][j].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i - 1][j] == false && isUnBlocked(grid, i - 1, j) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i - 1, j, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i - 1][j].f == FLT_MAX || cellDetails[i - 1][j].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i - 1, j)));
-                    cellDetails[i - 1][j].f = fNew;
-                    cellDetails[i - 1][j].g = gNew;
-                    cellDetails[i - 1][j].h = hNew;
-                    cellDetails[i - 1][j].parent_i = i;
-                    cellDetails[i - 1][j].parent_j = j;
-                }
-            }
-        }
+        int rowMov[] = {-1, 1, 0, 0, -1, -1, 1, 1};
+        int colMov[] = {0, 0, -1, 1, -1, 1, -1, 1};
 
-        //----------- 2nd Successor (South) ------------
-        if (isValid(i + 1, j) == true)
-        {
-            if (isDestination(i + 1, j, dest) == true)
-            {
-                cellDetails[i + 1][j].parent_i = i;
-                cellDetails[i + 1][j].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i + 1][j] == false && isUnBlocked(grid, i + 1, j) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i + 1, j, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i + 1][j].f == FLT_MAX || cellDetails[i + 1][j].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i + 1, j)));
-                    cellDetails[i + 1][j].f = fNew;
-                    cellDetails[i + 1][j].g = gNew;
-                    cellDetails[i + 1][j].h = hNew;
-                    cellDetails[i + 1][j].parent_i = i;
-                    cellDetails[i + 1][j].parent_j = j;
-                }
-            }
-        }
+        for (int k = 0; k < 8; k++) {
+            int row = i + rowMov[k];
+            int col = j + colMov[k];
 
-        //----------- 3rd Successor (East) ------------
-        if (isValid(i, j + 1) == true)
-        {
-            if (isDestination(i, j + 1, dest) == true)
-            {
-                cellDetails[i][j + 1].parent_i = i;
-                cellDetails[i][j + 1].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i][j + 1] == false && isUnBlocked(grid, i, j + 1) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i, j + 1, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i][j + 1].f == FLT_MAX || cellDetails[i][j + 1].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i, j + 1)));
-                    cellDetails[i][j + 1].f = fNew;
-                    cellDetails[i][j + 1].g = gNew;
-                    cellDetails[i][j + 1].h = hNew;
-                    cellDetails[i][j + 1].parent_i = i;
-                    cellDetails[i][j + 1].parent_j = j;
-                }
-            }
-        }
+            if (isValid(row, col)) {
+                if (isDestination(row, col, dest)) {
+                    cellDetails[row][col].parent_i = i;
+                    cellDetails[row][col].parent_j = j;
+                    printf("The destination cell is found\n");
+                    tracePath(cellDetails, dest, window, cellShape);
+                    foundDest = true;
+                    return;
+                } else if (!closedList[row][col] && isUnBlocked(grid, row, col)) {
+                    gNew = cellDetails[i][j].g + ((k < 4) ? 1.0 : 1.414);
+                    hNew = calculateHValue(row, col, dest);
+                    fNew = gNew + hNew;
 
-        //----------- 4th Successor (West) ------------
-        if (isValid(i, j - 1) == true)
-        {
-            if (isDestination(i, j - 1, dest) == true)
-            {
-                cellDetails[i][j - 1].parent_i = i;
-                cellDetails[i][j - 1].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i][j - 1] == false && isUnBlocked(grid, i, j - 1) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i, j - 1, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i][j - 1].f == FLT_MAX || cellDetails[i][j - 1].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i, j - 1)));
-                    cellDetails[i][j - 1].f = fNew;
-                    cellDetails[i][j - 1].g = gNew;
-                    cellDetails[i][j - 1].h = hNew;
-                    cellDetails[i][j - 1].parent_i = i;
-                    cellDetails[i][j - 1].parent_j = j;
-                }
-            }
-        }
-
-        //----------- 5th Successor (North-East) ------------
-        if (isValid(i - 1, j + 1) == true)
-        {
-            if (isDestination(i - 1, j + 1, dest) == true)
-            {
-                cellDetails[i - 1][j + 1].parent_i = i;
-                cellDetails[i - 1][j + 1].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i - 1][j + 1] == false && isUnBlocked(grid, i - 1, j + 1) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.414;
-                hNew = calculateHValue(i - 1, j + 1, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i - 1][j + 1].f == FLT_MAX || cellDetails[i - 1][j + 1].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i - 1, j + 1)));
-                    cellDetails[i - 1][j + 1].f = fNew;
-                    cellDetails[i - 1][j + 1].g = gNew;
-                    cellDetails[i - 1][j + 1].h = hNew;
-                    cellDetails[i - 1][j + 1].parent_i = i;
-                    cellDetails[i - 1][j + 1].parent_j = j;
-                }
-            }
-        }
-
-        //----------- 6th Successor (North-West) ------------
-        if (isValid(i - 1, j - 1) == true)
-        {
-            if (isDestination(i - 1, j - 1, dest) == true)
-            {
-                cellDetails[i - 1][j - 1].parent_i = i;
-                cellDetails[i - 1][j - 1].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i - 1][j - 1] == false && isUnBlocked(grid, i - 1, j - 1) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.414;
-                hNew = calculateHValue(i - 1, j - 1, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i - 1][j - 1].f == FLT_MAX || cellDetails[i - 1][j - 1].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i - 1, j - 1)));
-                    cellDetails[i - 1][j - 1].f = fNew;
-                    cellDetails[i - 1][j - 1].g = gNew;
-                    cellDetails[i - 1][j - 1].h = hNew;
-                    cellDetails[i - 1][j - 1].parent_i = i;
-                    cellDetails[i - 1][j - 1].parent_j = j;
-                }
-            }
-        }
-
-        //----------- 7th Successor (South-East) ------------
-        if (isValid(i + 1, j + 1) == true)
-        {
-            if (isDestination(i + 1, j + 1, dest) == true)
-            {
-                cellDetails[i + 1][j + 1].parent_i = i;
-                cellDetails[i + 1][j + 1].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i + 1][j + 1] == false && isUnBlocked(grid, i + 1, j + 1) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.414;
-                hNew = calculateHValue(i + 1, j + 1, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i + 1][j + 1].f == FLT_MAX || cellDetails[i + 1][j + 1].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i + 1, j + 1)));
-                    cellDetails[i + 1][j + 1].f = fNew;
-                    cellDetails[i + 1][j + 1].g = gNew;
-                    cellDetails[i + 1][j + 1].h = hNew;
-                    cellDetails[i + 1][j + 1].parent_i = i;
-                    cellDetails[i + 1][j + 1].parent_j = j;
-                }
-            }
-        }
-
-        //----------- 8th Successor (South-West) ------------
-        if (isValid(i + 1, j - 1) == true)
-        {
-            if (isDestination(i + 1, j - 1, dest) == true)
-            {
-                cellDetails[i + 1][j - 1].parent_i = i;
-                cellDetails[i + 1][j - 1].parent_j = j;
-                printf("The destination cell is found\n");
-                tracePath(cellDetails, src, dest, window, grid);
-                foundDest = true;
-                return;
-            }
-            else if (closedList[i + 1][j - 1] == false && isUnBlocked(grid, i + 1, j - 1) == true)
-            {
-                gNew = cellDetails[i][j].g + 1.414;
-                hNew = calculateHValue(i + 1, j - 1, dest);
-                fNew = gNew + hNew;
-                if (cellDetails[i + 1][j - 1].f == FLT_MAX || cellDetails[i + 1][j - 1].f > fNew)
-                {
-                    openList.insert(make_pair(fNew, make_pair(i + 1, j - 1)));
-                    cellDetails[i + 1][j - 1].f = fNew;
-                    cellDetails[i + 1][j - 1].g = gNew;
-                    cellDetails[i + 1][j - 1].h = hNew;
-                    cellDetails[i + 1][j - 1].parent_i = i;
-                    cellDetails[i + 1][j - 1].parent_j = j;
+                    if (cellDetails[row][col].f == FLT_MAX || cellDetails[row][col].f > fNew) {
+                        openList.insert(make_pair(fNew, make_pair(row, col)));
+                        cellDetails[row][col].f = fNew;
+                        cellDetails[row][col].g = gNew;
+                        cellDetails[row][col].h = hNew;
+                        cellDetails[row][col].parent_i = i;
+                        cellDetails[row][col].parent_j = j;
+                    }
                 }
             }
         }
     }
 
-    if (foundDest == false)
+    if (!foundDest) {
         printf("Failed to find the Destination Cell\n");
-
-    if (foundDest)
-    {
-        tracePath(cellDetails, src, dest, window, grid);
-        return; // Exit the search function after tracing the path
     }
 }
 
-int main()
-{
-    sf::RenderWindow window(sf::VideoMode(COL * CELL_SIZE, ROW * CELL_SIZE), "A* Pathfinding");
-
+int main() {
     int grid[ROW][COL] = {
-        {1, 0, 1, 1, 1, 1, 0, 1, 1, 1},
-        {1, 1, 1, 0, 1, 1, 1, 0, 1, 1},
-        {1, 1, 1, 0, 1, 1, 0, 1, 0, 1},
-        {0, 0, 1, 0, 1, 0, 0, 0, 0, 1},
-        {1, 1, 1, 0, 1, 1, 1, 0, 1, 0},
-        {1, 0, 1, 1, 1, 1, 0, 1, 0, 0},
-        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
-        {1, 0, 1, 1, 1, 1, 0, 1, 1, 1},
-        {1, 1, 1, 0, 0, 0, 1, 0, 0, 1}};
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1}
+    };
 
-    Pair src = make_pair(8, 9);
+    Pair src = make_pair(8, 8);
     Pair dest = make_pair(0, 0);
 
-    aStarSearch(grid, src, dest, window);
+    sf::RenderWindow window(sf::VideoMode(COL * CELL_SIZE, ROW * CELL_SIZE), "A* Pathfinding Visualization");
 
-    while (window.isOpen())
-    {
+    sf::RectangleShape cellShape(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
+    cellShape.setOutlineThickness(1);
+    cellShape.setOutlineColor(sf::Color::Black);
+
+    aStarSearch(grid, src, dest, window, cellShape);
+
+    while (window.isOpen()) {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
+        while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
-            {
                 window.close();
-            }
         }
-
-        // Rendering logic only
-        window.clear();
-        for (int i = 0; i < ROW; ++i)
-        {
-            for (int j = 0; j < COL; ++j)
-            {
-                sf::RectangleShape cellShape(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-                cellShape.setPosition(j * CELL_SIZE, i * CELL_SIZE);
-
-                if (i == src.first && j == src.second)
-                {
-                    cellShape.setFillColor(sf::Color::Red); // Start point color
-                }
-                else if (i == dest.first && j == dest.second)
-                {
-                    cellShape.setFillColor(sf::Color::Blue); // End point color
-                }
-                else if (grid[i][j] == 0)
-                {
-                    cellShape.setFillColor(sf::Color::Black);
-                }
-                else if (grid[i][j] == 1)
-                {
-                    cellShape.setFillColor(sf::Color::White);
-                }
-                else if (grid[i][j] == 2)
-                {
-                    cellShape.setFillColor(sf::Color::Yellow); // Exploration color
-                }
-                else if (grid[i][j] == 3)
-                {
-                    cellShape.setFillColor(sf::Color::Green); // Final path color
-                }
-
-                cellShape.setOutlineColor(sf::Color::Blue);
-                cellShape.setOutlineThickness(1);
-                window.draw(cellShape);
-            }
-        }
-        window.display();
     }
 
     return 0;
