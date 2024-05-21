@@ -2,7 +2,6 @@
 #include <queue>
 #include <cmath>
 #include <stdexcept>
-#include <algorithm>
 
 struct Node {
     int x, y;
@@ -19,12 +18,13 @@ bool operator<(const Node& a, const Node& b) {
 
 std::vector<Node*> getNeighbors(Node* node, const std::vector<std::vector<int>>& map) {
     std::vector<Node*> neighbors;
-    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    int directions[8][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     for (const auto& direction : directions) {
         int newX = node->x + direction[0];
         int newY = node->y + direction[1];
         if (newX >= 0 && newX < map[0].size() && newY >= 0 && newY < map.size() && map[newY][newX] != 1) {
-            neighbors.push_back(new Node(newX, newY));
+            float cost = (direction[0] == 0 || direction[1] == 0) ? 10 : 14; // Edge or diagonal cost
+            neighbors.push_back(new Node(newX, newY, cost));
         }
     }
     return neighbors;
@@ -98,7 +98,7 @@ std::vector<std::vector<std::vector<int>>> processFrame(const std::vector<std::v
             if (closedSet[neighbor->y][neighbor->x]) {
                 continue;
             }
-            float tentativeGCost = current.gCost + 1; // All edges have equal weight
+            float tentativeGCost = current.gCost + neighbor->gCost; // Edge or diagonal cost
             if (tentativeGCost < neighbor->gCost || !neighbor->parent) {
                 neighbor->gCost = tentativeGCost;
                 neighbor->hCost = heuristic(neighbor->x, neighbor->y, endX, endY);

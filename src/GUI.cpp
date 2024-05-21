@@ -37,7 +37,7 @@ void displayFrames(const std::vector<std::vector<std::vector<int>>>& frames) {
 
     sf::Clock clock;
     int frameIndex = 0;
-    float frameDuration = 1.0f; // 1 second per frame
+    float frameDuration = 0.15f; // 1 second per frame
 
     while (window.isOpen()) {
         sf::Event event;
