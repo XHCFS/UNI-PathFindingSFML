@@ -1,13 +1,17 @@
 #include <SFML/Graphics.hpp>
+#include <array>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <queue>
 #include <set>
 #include <stack>
+#include <string>
+#include <utility>
 #include <vector>
-#include <array>
+#include <filesystem>
 
 using namespace std;
 
@@ -57,15 +61,14 @@ void tracePath(const vector<vector<Cell>>& cellDetails, Pair dest, vector<Pair>&
     }
 }
 
-bool aStarStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<Pair>& path, 
-               vector<vector<bool>>& closedList, vector<vector<Cell>>& cellDetails, 
-               set<pPair>& openList, int ROW, int COL) {
+optional<vector<Pair>> aStarStep(const vector<vector<int>>& grid, Pair src, Pair dest, 
+                                 vector<vector<bool>>& closedList, vector<vector<Cell>>& cellDetails, 
+                                 set<pPair>& openList, int ROW, int COL) {
     if (!openList.empty()) {
-        auto p = *openList.begin();
+        auto [fValue, pos] = *openList.begin();
+        auto [i, j] = pos;
         openList.erase(openList.begin());
 
-        int i = p.second.first;
-        int j = p.second.second;
         closedList[i][j] = true;
 
         constexpr array<int, 8> rowMov = {-1, 1, 0, 0, -1, -1, 1, 1};
@@ -79,8 +82,9 @@ bool aStarStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<Pair
                 if (isDestination(row, col, dest)) {
                     cellDetails[row][col].parent_i = i;
                     cellDetails[row][col].parent_j = j;
+                    vector<Pair> path;
                     tracePath(cellDetails, dest, path);
-                    return true;
+                    return path;
                 } else if (!closedList[row][col] && isUnBlocked(grid, row, col)) {
                     double gNew = cellDetails[i][j].g + ((k < 4) ? 1.0 : 1.414);
                     double hNew = calculateHValue(row, col, dest);
@@ -99,18 +103,17 @@ bool aStarStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<Pair
         }
     }
 
-    return false;
+    return nullopt;
 }
 
-bool dijkstraStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<Pair>& path, 
-                  vector<vector<bool>>& closedList, vector<vector<Cell>>& cellDetails, 
-                  set<pPair>& openList, int ROW, int COL) {
+optional<vector<Pair>> dijkstraStep(const vector<vector<int>>& grid, Pair src, Pair dest, 
+                                    vector<vector<bool>>& closedList, vector<vector<Cell>>& cellDetails, 
+                                    set<pPair>& openList, int ROW, int COL) {
     if (!openList.empty()) {
-        auto p = *openList.begin();
+        auto [gValue, pos] = *openList.begin();
+        auto [i, j] = pos;
         openList.erase(openList.begin());
 
-        int i = p.second.first;
-        int j = p.second.second;
         closedList[i][j] = true;
 
         constexpr array<int, 8> rowMov = {-1, 1, 0, 0, -1, -1, 1, 1};
@@ -124,8 +127,9 @@ bool dijkstraStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<P
                 if (isDestination(row, col, dest)) {
                     cellDetails[row][col].parent_i = i;
                     cellDetails[row][col].parent_j = j;
+                    vector<Pair> path;
                     tracePath(cellDetails, dest, path);
-                    return true;
+                    return path;
                 } else if (!closedList[row][col] && isUnBlocked(grid, row, col)) {
                     double gNew = cellDetails[i][j].g + ((k < 4) ? 1.0 : 1.414);
 
@@ -141,10 +145,15 @@ bool dijkstraStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<P
         }
     }
 
-    return false;
+    return nullopt;
 }
 
 bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& ROW, int& COL, string& algorithm) {
+    if (!filesystem::exists(filename)) {
+        cerr << "Error: File does not exist" << endl;
+        return false;
+    }
+
     ifstream file(filename);
     if (!file.is_open()) {
         cerr << "Error opening file" << endl;
@@ -195,19 +204,9 @@ int main(int argc, char* argv[]) {
 
     vector<vector<bool>> closedList(ROW, vector<bool>(COL, false));
 
-    vector<vector<Cell>> cellDetails(ROW, vector<Cell>(COL));
+    vector<vector<Cell>> cellDetails(ROW, vector<Cell>(COL, Cell{-1, -1, numeric_limits<double>::max(), numeric_limits<double>::max(), numeric_limits<double>::max()}));
 
-    for (int i = 0; i < ROW; ++i) {
-        for (int j = 0; j < COL; ++j) {
-            cellDetails[i][j].f = numeric_limits<double>::max();
-            cellDetails[i][j].g = numeric_limits<double>::max();
-            cellDetails[i][j].h = numeric_limits<double>::max();
-            cellDetails[i][j].parent_i = -1;
-            cellDetails[i][j].parent_j = -1;
-        }
-    }
-
-    int i = src.first, j = src.second;
+    auto [i, j] = src;
     cellDetails[i][j].f = 0.0;
     cellDetails[i][j].g = 0.0;
     cellDetails[i][j].h = 0.0;
@@ -215,7 +214,7 @@ int main(int argc, char* argv[]) {
     cellDetails[i][j].parent_j = j;
 
     set<pPair> openList;
-    openList.emplace(0.0, make_pair(i, j));
+    openList.emplace(0.0, src);
 
     bool foundDest = false;
 
@@ -227,13 +226,19 @@ int main(int argc, char* argv[]) {
         }
 
         if (!foundDest) {
+            optional<vector<Pair>> result;
             if (algorithm == "A*") {
-                foundDest = aStarStep(grid, src, dest, path, closedList, cellDetails, openList, ROW, COL);
+                result = aStarStep(grid, src, dest, closedList, cellDetails, openList, ROW, COL);
             } else if (algorithm == "Dijkstra") {
-                foundDest = dijkstraStep(grid, src, dest, path, closedList, cellDetails, openList, ROW, COL);
+                result = dijkstraStep(grid, src, dest, closedList, cellDetails, openList, ROW, COL);
             } else {
                 cerr << "Unknown algorithm specified." << endl;
                 return -1;
+            }
+
+            if (result) {
+                path = result.value();
+                foundDest = true;
             }
         }
 
@@ -258,8 +263,8 @@ int main(int argc, char* argv[]) {
 
         // Draw the path
         if (foundDest) {
-            for (const auto& p : path) {
-                cellShape.setPosition(p.second * CELL_SIZE, p.first * CELL_SIZE);
+            for (const auto& [row, col] : path) {
+                cellShape.setPosition(col * CELL_SIZE, row * CELL_SIZE);
                 cellShape.setFillColor(sf::Color::Blue);
                 window.draw(cellShape);
             }
