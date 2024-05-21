@@ -1,6 +1,5 @@
 #include <SFML/Graphics.hpp>
 #include <bits/stdc++.h>
-
 using namespace std;
 
 #define ROW 9
@@ -28,10 +27,12 @@ bool isDestination(int row, int col, Pair dest) {
 }
 
 double calculateHValue(int row, int col, Pair dest) {
+    // Manhattan distance
     return abs(row - dest.first) + abs(col - dest.second);
 }
 
-void tracePath(cell cellDetails[][COL], Pair dest, vector<Pair> &path) {
+void tracePath(cell cellDetails[][COL], Pair dest, sf::RenderWindow &window, sf::RectangleShape &cellShape) {
+    printf("\nThe Path is ");
     int row = dest.first;
     int col = dest.second;
 
@@ -49,18 +50,95 @@ void tracePath(cell cellDetails[][COL], Pair dest, vector<Pair> &path) {
     while (!Path.empty()) {
         pair<int, int> p = Path.top();
         Path.pop();
-        path.push_back(p);
+        printf("-> (%d,%d) ", p.first, p.second);
+
+        cellShape.setPosition(p.second * CELL_SIZE, p.first * CELL_SIZE);
+        cellShape.setFillColor(sf::Color::Blue);
+        window.draw(cellShape);
+        window.display();
+        sf::sleep(sf::milliseconds(250));
     }
 }
 
-bool aStarStep(int grid[][COL], Pair src, Pair dest, vector<Pair> &path, bool closedList[][ROW], cell cellDetails[][COL], set<pPair> &openList) {
-    if (!openList.empty()) {
+void aStarSearch(int grid[][COL], Pair src, Pair dest, sf::RenderWindow &window, sf::RectangleShape &cellShape) {
+    if (isValid(src.first, src.second) == false) {
+        printf("Source is invalid\n");
+        return;
+    }
+
+    if (isValid(dest.first, dest.second) == false) {
+        printf("Destination is invalid\n");
+        return;
+    }
+
+    if (isUnBlocked(grid, src.first, src.second) == false || isUnBlocked(grid, dest.first, dest.second) == false) {
+        printf("Source or the destination is blocked\n");
+        return;
+    }
+
+    if (isDestination(src.first, src.second, dest) == true) {
+        printf("We are already at the destination\n");
+        return;
+    }
+
+    bool closedList[ROW][COL];
+    memset(closedList, false, sizeof(closedList));
+
+    cell cellDetails[ROW][COL];
+
+    int i, j;
+
+    for (i = 0; i < ROW; i++) {
+        for (j = 0; j < COL; j++) {
+            cellDetails[i][j].f = FLT_MAX;
+            cellDetails[i][j].g = FLT_MAX;
+            cellDetails[i][j].h = FLT_MAX;
+            cellDetails[i][j].parent_i = -1;
+            cellDetails[i][j].parent_j = -1;
+        }
+    }
+
+    i = src.first, j = src.second;
+    cellDetails[i][j].f = 0.0;
+    cellDetails[i][j].g = 0.0;
+    cellDetails[i][j].h = 0.0;
+    cellDetails[i][j].parent_i = i;
+    cellDetails[i][j].parent_j = j;
+
+    set<pPair> openList;
+    openList.insert(make_pair(0.0, make_pair(i, j)));
+
+    bool foundDest = false;
+
+    while (!openList.empty()) {
         pPair p = *openList.begin();
         openList.erase(openList.begin());
 
-        int i = p.second.first;
-        int j = p.second.second;
+        i = p.second.first;
+        j = p.second.second;
         closedList[i][j] = true;
+
+        window.clear();
+        for (int row = 0; row < ROW; row++) {
+            for (int col = 0; col < COL; col++) {
+                cellShape.setPosition(col * CELL_SIZE, row * CELL_SIZE);
+                if (grid[row][col] == 0) {
+                    cellShape.setFillColor(sf::Color::Black);
+                } else if (closedList[row][col]) {
+                    cellShape.setFillColor(sf::Color::Red);
+                } else if (row == src.first && col == src.second) {
+                    cellShape.setFillColor(sf::Color::Green);
+                } else if (row == dest.first && col == dest.second) {
+                    cellShape.setFillColor(sf::Color::Magenta);
+                } else {
+                    cellShape.setFillColor(sf::Color::White);
+                }
+                window.draw(cellShape);
+            }
+        }
+        window.display();
+
+        sf::sleep(sf::milliseconds(250));
 
         double gNew, hNew, fNew;
 
@@ -75,8 +153,10 @@ bool aStarStep(int grid[][COL], Pair src, Pair dest, vector<Pair> &path, bool cl
                 if (isDestination(row, col, dest)) {
                     cellDetails[row][col].parent_i = i;
                     cellDetails[row][col].parent_j = j;
-                    tracePath(cellDetails, dest, path);
-                    return true;
+                    printf("The destination cell is found\n");
+                    tracePath(cellDetails, dest, window, cellShape);
+                    foundDest = true;
+                    return;
                 } else if (!closedList[row][col] && isUnBlocked(grid, row, col)) {
                     gNew = cellDetails[i][j].g + ((k < 4) ? 1.0 : 1.414);
                     hNew = calculateHValue(row, col, dest);
@@ -95,7 +175,9 @@ bool aStarStep(int grid[][COL], Pair src, Pair dest, vector<Pair> &path, bool cl
         }
     }
 
-    return false;
+    if (!foundDest) {
+        printf("Failed to find the Destination Cell\n");
+    }
 }
 
 int main() {
@@ -120,34 +202,7 @@ int main() {
     cellShape.setOutlineThickness(1);
     cellShape.setOutlineColor(sf::Color::Black);
 
-    vector<Pair> path;
-
-    bool closedList[ROW][COL];
-    memset(closedList, false, sizeof(closedList));
-
-    cell cellDetails[ROW][COL];
-
-    for (int i = 0; i < ROW; i++) {
-        for (int j = 0; j < COL; j++) {
-            cellDetails[i][j].f = FLT_MAX;
-            cellDetails[i][j].g = FLT_MAX;
-            cellDetails[i][j].h = FLT_MAX;
-            cellDetails[i][j].parent_i = -1;
-            cellDetails[i][j].parent_j = -1;
-        }
-    }
-
-    int i = src.first, j = src.second;
-    cellDetails[i][j].f = 0.0;
-    cellDetails[i][j].g = 0.0;
-    cellDetails[i][j].h = 0.0;
-    cellDetails[i][j].parent_i = i;
-    cellDetails[i][j].parent_j = j;
-
-    set<pPair> openList;
-    openList.insert(make_pair(0.0, make_pair(i, j)));
-
-    bool foundDest = false;
+    aStarSearch(grid, src, dest, window, cellShape);
 
     while (window.isOpen()) {
         sf::Event event;
@@ -155,42 +210,6 @@ int main() {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-
-        if (!foundDest) {
-            foundDest = aStarStep(grid, src, dest, path, closedList, cellDetails, openList);
-        }
-
-        window.clear();
-        for (int row = 0; row < ROW; row++) {
-            for (int col = 0; col < COL; col++) {
-                cellShape.setPosition(col * CELL_SIZE, row * CELL_SIZE);
-                if (grid[row][col] == 0) {
-                    cellShape.setFillColor(sf::Color::Black);
-                } else if (closedList[row][col]) {
-                    cellShape.setFillColor(sf::Color::Red);
-                } else if (row == src.first && col == src.second) {
-                    cellShape.setFillColor(sf::Color::Green);
-                } else if (row == dest.first && col == dest.second) {
-                    cellShape.setFillColor(sf::Color::Magenta);
-                } else {
-                    cellShape.setFillColor(sf::Color::White);
-                }
-                window.draw(cellShape);
-            }
-        }
-
-        // Draw the path
-        if (foundDest) {
-            for (auto p : path) {
-                cellShape.setPosition(p.second * CELL_SIZE, p.first * CELL_SIZE);
-                cellShape.setFillColor(sf::Color::Blue);
-                window.draw(cellShape);
-            }
-        }
-
-        window.display();
-
-        sf::sleep(sf::milliseconds(100));
     }
 
     return 0;
