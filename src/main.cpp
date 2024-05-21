@@ -102,14 +102,56 @@ bool aStarStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<Pair
     return false;
 }
 
-bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& ROW, int& COL) {
+bool dijkstraStep(const vector<vector<int>>& grid, Pair src, Pair dest, vector<Pair>& path, 
+                  vector<vector<bool>>& closedList, vector<vector<Cell>>& cellDetails, 
+                  set<pPair>& openList, int ROW, int COL) {
+    if (!openList.empty()) {
+        auto p = *openList.begin();
+        openList.erase(openList.begin());
+
+        int i = p.second.first;
+        int j = p.second.second;
+        closedList[i][j] = true;
+
+        constexpr array<int, 8> rowMov = {-1, 1, 0, 0, -1, -1, 1, 1};
+        constexpr array<int, 8> colMov = {0, 0, -1, 1, -1, 1, -1, 1};
+
+        for (int k = 0; k < 8; ++k) {
+            int row = i + rowMov[k];
+            int col = j + colMov[k];
+
+            if (isValid(row, col, ROW, COL)) {
+                if (isDestination(row, col, dest)) {
+                    cellDetails[row][col].parent_i = i;
+                    cellDetails[row][col].parent_j = j;
+                    tracePath(cellDetails, dest, path);
+                    return true;
+                } else if (!closedList[row][col] && isUnBlocked(grid, row, col)) {
+                    double gNew = cellDetails[i][j].g + ((k < 4) ? 1.0 : 1.414);
+
+                    if (cellDetails[row][col].g == numeric_limits<double>::max() || cellDetails[row][col].g > gNew) {
+                        openList.emplace(gNew, make_pair(row, col));
+                        cellDetails[row][col].g = gNew;
+                        cellDetails[row][col].f = gNew;
+                        cellDetails[row][col].parent_i = i;
+                        cellDetails[row][col].parent_j = j;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& ROW, int& COL, string& algorithm) {
     ifstream file(filename);
     if (!file.is_open()) {
         cerr << "Error opening file" << endl;
         return false;
     }
 
-    file >> ROW >> COL;
+    file >> algorithm >> ROW >> COL;
 
     grid.resize(ROW, vector<int>(COL));
 
@@ -124,11 +166,18 @@ bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& RO
     return true;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        cerr << "Usage: " << argv[0] << " <input file>" << endl;
+        return -1;
+    }
+
+    string filename = argv[1];
     vector<vector<int>> grid;
     int ROW, COL;
+    string algorithm;
 
-    if (!loadGridFromFile("grid.txt", grid, ROW, COL)) {
+    if (!loadGridFromFile(filename, grid, ROW, COL, algorithm)) {
         cerr << "Failed to load grid from file." << endl;
         return -1;
     }
@@ -136,7 +185,7 @@ int main() {
     Pair src = make_pair(ROW - 1, COL - 1);
     Pair dest = make_pair(0, 0);
 
-    sf::RenderWindow window(sf::VideoMode(COL * CELL_SIZE, ROW * CELL_SIZE), "A* Pathfinding Visualization");
+    sf::RenderWindow window(sf::VideoMode(COL * CELL_SIZE, ROW * CELL_SIZE), "Pathfinding Visualization");
 
     sf::RectangleShape cellShape(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
     cellShape.setOutlineThickness(1);
@@ -178,7 +227,14 @@ int main() {
         }
 
         if (!foundDest) {
-            foundDest = aStarStep(grid, src, dest, path, closedList, cellDetails, openList, ROW, COL);
+            if (algorithm == "A*") {
+                foundDest = aStarStep(grid, src, dest, path, closedList, cellDetails, openList, ROW, COL);
+            } else if (algorithm == "Dijkstra") {
+                foundDest = dijkstraStep(grid, src, dest, path, closedList, cellDetails, openList, ROW, COL);
+            } else {
+                cerr << "Unknown algorithm specified." << endl;
+                return -1;
+            }
         }
 
         window.clear();
