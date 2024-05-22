@@ -1,0 +1,112 @@
+\documentclass[twocolumn]{article} 
+\usepackage{graphicx}
+\usepackage[margin=2.0cm]{geometry} % Decrease margin size
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage[hyphens,spaces,obeyspaces]{url}
+\usepackage[numbers]{natbib}
+\usepackage{listings}
+\usepackage{lipsum}
+% Define grayscale colors
+\definecolor{codegray}{gray}{0.95} % Background color
+\definecolor{codeblack}{gray}{0.1} % Text color
+\definecolor{codecomment}{gray}{0.5} % Comment color
+
+% Define custom lstlisting style
+\lstdefinestyle{researchpaper}{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small\color{codeblack},
+    commentstyle=\color{codecomment},
+    frame=single,
+    framerule=0pt,
+    rulecolor=\color{codeblack},
+    aboveskip=10pt,
+    belowskip=10pt,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    captionpos=b,
+    numbers=left,
+    numbersep=5pt,
+    numberstyle=\tiny\color{codeblack},
+}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{fancyhdr}
+% Header
+\pagestyle{fancy}
+\fancyhf{} % Clear all header and footer fields
+\lhead{\nouppercase{\leftmark}} % Left align section title in header
+\rhead{\nouppercase{\rightmark}} % Right align subsection title in header
+\cfoot{\thepage} % Center align page number in footer
+
+% Header
+\renewcommand{\headrulewidth}{0.2pt} % Set the thickness of the header line
+\renewcommand{\footrulewidth}{0.2pt} % Set the thickness of the footer line
+
+% Footer
+\fancyfoot{} % Clear footer fields
+\lfoot{\today} % Left align current date in footer
+\cfoot{} % Center align nothing in footer
+\rfoot{Zewail City of Science and Technology} % Right align university name in footer
+
+\title{Discrete Mathematics (MATH 308) - Spring 2024 \\ Course Project - Pathfinding Simulation }
+\author{Saifelden Mohamed 202100432\\
+Aser Osama 202101266\\
+Omar Elsayed 202100597\\}
+\date{}
+
+\makeatletter
+\renewcommand{\maketitle}{
+    \thispagestyle{empty} % Remove header and footer from this page
+    \vspace*{\fill} % Vertically center content
+    \begin{center}
+        {\huge\@title}
+        
+        \vspace{1cm}
+        \includegraphics[width=0.5\textwidth]{zew.png}
+        
+        \vspace{0.5cm}
+
+        \Large
+
+        \begin{tabular}{c}
+            \@author
+        \end{tabular}
+
+        \vspace{0.5cm}
+
+        
+        \Large
+        Communications and Information Engineering\\
+        Zewail City of Science and Technology\\
+        \Large
+        \today
+    \end{center}
+    \vspace*{\fill} % Vertically center content
+}
+\makeatother
+\begin{document}
+
+\onecolumn % Switch to one column layout
+\maketitle
+\thispagestyle{empty} % Remove page number from title page
+
+\newpage
+\tableofcontents
+
+\newpage
+\twocolumn 
+
+\section{Introduction}
+\lipsum[1-3] % Dummy text, replace with your content
+
+\section{Main Body}
+\lipsum[4-6] % Dummy text, replace with your content
+
+\section{Conclusion}
+\lipsum[7-8] % Dummy text, replace with your content
+
+\end{document}
