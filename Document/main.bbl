@@ -1,5 +1,15 @@
 \begin{thebibliography}{1}
 
+\bibitem{dijkstra1959note}
+E.~W. Dijkstra.
+\newblock A note on two problems in connexion with graphs.
+\newblock {\em Numerische Mathematik}, 1:269--271, 1959.
+
+\bibitem{geeksforgeeks_astar}
+GeeksforGeeks.
+\newblock A* search algorithm.
+\newblock {\em GeeksforGeeks}, 2024.
+
 \bibitem{4082128}
 Peter~E. Hart, Nils~J. Nilsson, and Bertram Raphael.
 \newblock A formal basis for the heuristic determination of minimum cost paths.
