@@ -148,7 +148,7 @@ optional<vector<Pair>> dijkstraStep(const vector<vector<int>>& grid, Pair src, P
     return nullopt;
 }
 
-bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& ROW, int& COL, string& algorithm) {
+bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& ROW, int& COL, string& algorithm, Pair& src, Pair& dest) {
     if (!filesystem::exists(filename)) {
         cerr << "Error: File does not exist" << endl;
         return false;
@@ -160,39 +160,49 @@ bool loadGridFromFile(const string& filename, vector<vector<int>>& grid, int& RO
         return false;
     }
 
-    file >> algorithm >> ROW >> COL;
+    string line;
+    getline(file, line); // Skip #Algorithm:
+    getline(file, algorithm); // Read algorithm
+    getline(file, line); // Skip #gridsize:
+    file >> ROW >> COL; // Read ROW and COL
+
+    getline(file, line); // Move to the next line
+    getline(file, line); // Skip #input grid (s for start, e for end)
 
     grid.resize(ROW, vector<int>(COL));
 
     for (int i = 0; i < ROW; ++i) {
         for (int j = 0; j < COL; ++j) {
-            if (!(file >> grid[i][j])) {
-                cerr << "Error reading file" << endl;
-                return false;
+            char ch;
+            file >> ch;
+            if (ch == 's') {
+                src = {i, j};
+                grid[i][j] = 1;
+            } else if (ch == 'e') {
+                dest = {i, j};
+                grid[i][j] = 1;
+            } else {
+                grid[i][j] = ch - '0';
             }
         }
     }
+
     return true;
 }
+int main() {
+    string filename;
+    cout << "Enter the input file name: ";
+    cin >> filename;
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        cerr << "Usage: " << argv[0] << " <input file>" << endl;
-        return -1;
-    }
-
-    string filename = argv[1];
     vector<vector<int>> grid;
     int ROW, COL;
     string algorithm;
+    Pair src, dest;
 
-    if (!loadGridFromFile(filename, grid, ROW, COL, algorithm)) {
+    if (!loadGridFromFile(filename, grid, ROW, COL, algorithm, src, dest)) {
         cerr << "Failed to load grid from file." << endl;
         return -1;
     }
-
-    Pair src = make_pair(ROW - 1, COL - 1);
-    Pair dest = make_pair(0, 0);
 
     sf::RenderWindow window(sf::VideoMode(COL * CELL_SIZE, ROW * CELL_SIZE), "Pathfinding Visualization");
 

@@ -1,0 +1,14 @@
+#Algorthm:
+Dijkstra
+#gridsize:
+9 9
+#input grid (s for start, e for end)
+e 1 1 1 1 1 1 1 1
+1 0 0 0 0 0 0 0 1
+1 1 1 1 1 1 1 1 1
+1 0 0 0 0 0 0 0 1
+1 1 1 1 1 1 1 1 1
+1 0 0 0 0 0 0 0 1
+1 1 1 1 1 1 1 1 1
+1 0 0 0 0 0 0 0 1
+1 1 1 1 1 1 1 1 s
